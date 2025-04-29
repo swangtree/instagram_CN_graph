@@ -5,8 +5,8 @@ import os
 
 # --- Configuration ---
 # Define directories instead of specific files
-html_dir = "final_project/html_files"
-csv_dir = "final_project/csv_files"
+html_dir = "html_files"
+csv_dir = "csv_files"
 base_instagram_url = "https://www.instagram.com"
 # ---
 
