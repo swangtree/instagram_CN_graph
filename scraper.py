@@ -3,12 +3,10 @@ from bs4 import BeautifulSoup
 import re
 import os
 
-# --- Configuration ---
-# Define directories instead of specific files
+#configuration
 html_dir = "html_files"
 csv_dir = "csv_files"
 base_instagram_url = "https://www.instagram.com"
-# ---
 
 def extract_username_from_alt(alt_text):
     """Extracts username from image alt text like \"username's profile picture\""""
@@ -19,7 +17,7 @@ def extract_username_from_alt(alt_text):
 
 def scrape_followers(html_path, csv_output_path):
     """Scrapes follower data from the saved HTML file and saves to CSV."""
-    print(f"--- Processing: {os.path.basename(html_path)} ---") # Log current file
+    print(f"--- Processing: {os.path.basename(html_path)} ---")
     followers_data = []
     
     try:
@@ -52,14 +50,11 @@ def scrape_followers(html_path, csv_output_path):
         profile_url = None
         img_url = None
         
-        # --- Extract Username and Profile URL ---
-        # Find the link containing the username span
         username_link_tag = follower_div.find("a", href=re.compile(r"^/[^/]+/$"), role="link", tabindex="0")
         if username_link_tag:
             href = username_link_tag.get("href")
             if href:
                 profile_url = base_instagram_url + href
-                # Extract username from link text or href
                 username_span = username_link_tag.find("span", class_="_ap3a") # Class might change!
                 if username_span and username_span.text:
                      username = username_span.text.strip()
@@ -82,7 +77,6 @@ def scrape_followers(html_path, csv_output_path):
         except Exception as e:
             pass 
 
-        # --- Extract Image URL ---
         img_tag = follower_div.find("img", class_="xpdipgo") #may need to edit
         if img_tag:
             img_url = img_tag.get("src")
@@ -93,7 +87,6 @@ def scrape_followers(html_path, csv_output_path):
                 if not profile_url and username: 
                      profile_url = base_instagram_url + f"/{username}/"
 
-        # --- Store Data ---
         if username and profile_url: # Only add if we have the essentials
              followers_data.append({
                  "username": username,
@@ -110,14 +103,12 @@ def scrape_followers(html_path, csv_output_path):
         print("Warning: No follower data was successfully extracted. Check HTML structure and selectors.")
         return None
         
-    # --- Create DataFrame and Save CSV ---
     df = pd.DataFrame(followers_data)
     
     # Ensure output directory exists
     os.makedirs(os.path.dirname(csv_output_path), exist_ok=True)
 
     try:
-        # Use the passed csv_output_path argument
         df.to_csv(csv_output_path, index=False, encoding="utf-8")
         print(f"Successfully scraped {len(df)} followers to {os.path.basename(csv_output_path)}")
     except Exception as e:
@@ -137,11 +128,9 @@ def main():
     for filename in os.listdir(html_dir):
         if filename.endswith(".html"):
             current_html_path = os.path.join(html_dir, filename)
-            # Construct output CSV path
             base_name = os.path.splitext(filename)[0]
             current_csv_path = os.path.join(csv_dir, f"{base_name}_data.csv")
             
-            # Call the scraper for the current file
             scraped_df = scrape_followers(current_html_path, current_csv_path)
             
             if scraped_df is not None:
@@ -151,7 +140,7 @@ def main():
                 # print(scraped_df.head())
                 # print(f"\\n--- DataFrame Info for {filename} ---")
                 # scraped_df.info()
-            print("-" * 30) # Separator between files
+            print("-" * 30) 
 
     print(f"Finished scraping. Processed {processed_files} HTML files.")
 
