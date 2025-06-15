@@ -30,21 +30,12 @@ def scrape_followers(html_path, csv_output_path):
         print(f"Error reading or parsing HTML file {html_path}: {e}")
         return None
 
-    # Find the main container divs for each follower
+    # find the main container divs for each follower
     potential_follower_divs = soup.find_all("div", class_="x1dm5mii") 
-    
-    if not potential_follower_divs:
-         # Fallback logic remains the same
-         print("Primary selector 'div.x1dm5mii' not found. Trying fallback based on username links.")
-         username_links = soup.select('a[href^="/"][href$="/"] span._ap3a') # Select spans within profile links
-         potential_follower_divs = [link.find_parent("div", class_="x1dm5mii") for link in username_links if link.find_parent("div", class_="x1dm5mii")]
-         potential_follower_divs = list(dict.fromkeys(potential_follower_divs)) # Remove duplicates
-
 
     print(f"Found {len(potential_follower_divs)} potential follower entries.")
 
     for follower_div in potential_follower_divs:
-        # Reset variables for each follower
         username = None
         full_name = None
         profile_url = None
@@ -55,22 +46,20 @@ def scrape_followers(html_path, csv_output_path):
             href = username_link_tag.get("href")
             if href:
                 profile_url = base_instagram_url + href
-                username_span = username_link_tag.find("span", class_="_ap3a") # Class might change!
+                username_span = username_link_tag.find("span", class_="_ap3a")
                 if username_span and username_span.text:
                      username = username_span.text.strip()
                 elif len(href) > 2:
-                     username = href.strip('/') # Fallback to username from href
+                     username = href.strip('/') 
 
-        # --- Extract Full Name ---
         try:
             full_name_span = follower_div.find("span", class_="x1lliihq x193iq5w x6ikm8r x10wlt62 xlyipyv xuxw1ft")
             if full_name_span:
                  full_name = full_name_span.text.strip()
             else:
-                 # Fallback: Try finding the outer span structure if the inner one fails
-                 full_name_outer_span = follower_div.find("span", class_="x1lliihq x1plvlek xryxfnj") # This outer class might be more stable
+                 full_name_outer_span = follower_div.find("span", class_="x1lliihq x1plvlek xryxfnj")
                  if full_name_outer_span:
-                     full_name_inner_span = full_name_outer_span.find("span", class_="x1lliihq") # Find any inner span
+                     full_name_inner_span = full_name_outer_span.find("span", class_="x1lliihq")
                      if full_name_inner_span:
                          full_name = full_name_inner_span.text.strip()
                                     
@@ -87,16 +76,13 @@ def scrape_followers(html_path, csv_output_path):
                 if not profile_url and username: 
                      profile_url = base_instagram_url + f"/{username}/"
 
-        if username and profile_url: # Only add if we have the essentials
+        if username and profile_url: 
              followers_data.append({
                  "username": username,
-                 "full_name": full_name if full_name else "", # Use empty string if None
+                 "full_name": full_name if full_name else "",
                  "profile_url": profile_url,
-                 "image_url": img_url if img_url else ""    # Use empty string if None
+                 "image_url": img_url if img_url else ""
              })
-        # else:
-             # Optional debug log for skipped entries
-             # print(f"Skipping entry, missing username or profile URL.")
 
 
     if not followers_data:
@@ -104,8 +90,7 @@ def scrape_followers(html_path, csv_output_path):
         return None
         
     df = pd.DataFrame(followers_data)
-    
-    # Ensure output directory exists
+
     os.makedirs(os.path.dirname(csv_output_path), exist_ok=True)
 
     try:
@@ -118,13 +103,11 @@ def scrape_followers(html_path, csv_output_path):
     return df
 
 def main():
-    # Ensure output directory exists before starting
-    os.makedirs(csv_dir, exist_ok=True)
     
     print(f"Starting scraper. Input HTML directory: {html_dir}, Output CSV directory: {csv_dir}")
     
     processed_files = 0
-    # Loop through files in the html directory
+    #loop through files
     for filename in os.listdir(html_dir):
         if filename.endswith(".html"):
             current_html_path = os.path.join(html_dir, filename)
@@ -135,14 +118,9 @@ def main():
             
             if scraped_df is not None:
                 processed_files += 1
-                # Optionally print head/info for each processed file
-                # print(f"\\n--- First 5 rows for {filename} ---")
-                # print(scraped_df.head())
-                # print(f"\\n--- DataFrame Info for {filename} ---")
-                # scraped_df.info()
-            print("-" * 30) 
+            print("---------------------------------------------") 
 
-    print(f"Finished scraping. Processed {processed_files} HTML files.")
+    print(f"finished scraping. Processed {processed_files} HTML files.")
 
 if __name__ == "__main__":
     main()
